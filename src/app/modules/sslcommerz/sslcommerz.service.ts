@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import SSLCommerzPayment from 'sslcommerz-lts';
 import config from '../../config';
 import AppError from '../../errors/appError';
 import { StatusCodes } from 'http-status-codes';
@@ -8,12 +7,13 @@ import { Order } from '../order/order.model';
 import mongoose from 'mongoose';
 import { generateOrderInvoicePDF } from '../../utils/generateOrderInvoicePDF';
 import { EmailHelper } from '../../utils/emailHelper';
+import SSLCommerzPayment from 'sslcommerz-lts';
 
 const app = express();
 
 const store_id = config.ssl.store_id as string;
 const store_passwd = config.ssl.store_pass as string;
-const is_live = false; // true for live, false for sandbox
+const is_live = false;
 
 
 // SSLCommerz init

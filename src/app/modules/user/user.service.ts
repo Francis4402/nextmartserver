@@ -11,7 +11,7 @@ import { AuthService } from '../auth/auth.service';
 import { ICustomer } from '../customer/customer.interface';
 import { IJwtPayload } from '../auth/auth.interface';
 
-// Function to register user
+
 const registerUser = async (userData: IUser) => {
    const session = await mongoose.startSession();
 

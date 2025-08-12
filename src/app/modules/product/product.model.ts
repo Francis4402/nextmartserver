@@ -2,6 +2,7 @@ import { Schema, model, Document, Types } from 'mongoose';
 import { IProduct } from './product.interface';
 import { FlashSale } from '../flashSell/flashSale.model';
 
+
 const productSchema = new Schema<IProduct>(
    {
       name: {
@@ -85,8 +86,6 @@ const productSchema = new Schema<IProduct>(
    },
    {
       timestamps: true,
-      // toJSON: { virtuals: true },
-      // toObject: { virtuals: true }
    }
 );
 
@@ -109,7 +108,7 @@ productSchema.methods.calculateOfferPrice = async function () {
       return this.price - discount;
    }
 
-   return null; // or you can return 0 or another default value
+   return null;
 };
 
 export const Product = model<IProduct>('Product', productSchema);

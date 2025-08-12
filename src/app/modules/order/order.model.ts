@@ -1,7 +1,6 @@
 import { Schema, Types, model } from "mongoose";
 import { IOrder } from "./order.interface";
 import { Product } from "../product/product.model";
-import { Coupon } from "../coupon/coupon.model";
 import AppError from "../../errors/appError";
 import { StatusCodes } from "http-status-codes";
 
@@ -122,26 +121,6 @@ orderSchema.pre("validate", async function (next) {
     totalAmount += price;
   }
 
-  if (order.coupon) {
-    const couponDetails = await Coupon.findById(order.coupon);
-    if (String(shopId) === couponDetails?.shop.toString()) {
-      throw new AppError(StatusCodes.BAD_REQUEST, "The coupon is not applicable for your selected products")
-    }
-    if (couponDetails && couponDetails.isActive) {
-      if (totalAmount >= couponDetails.minOrderAmount) {
-        if (couponDetails.discountType === "Percentage") {
-          finalDiscount = Math.min(
-            (couponDetails.discountValue / 100) * totalAmount,
-            couponDetails.maxDiscountAmount
-              ? couponDetails.maxDiscountAmount
-              : Infinity
-          );
-        } else if (couponDetails.discountType === "Flat") {
-          finalDiscount = Math.min(couponDetails.discountValue, totalAmount);
-        }
-      }
-    }
-  }
 
   const isDhaka = order?.shippingAddress?.toLowerCase()?.includes("dhaka");
   const deliveryCharge = isDhaka ? 60 : 120;

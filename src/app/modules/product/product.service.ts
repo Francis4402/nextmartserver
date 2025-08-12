@@ -2,22 +2,22 @@ import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/appError';
 import { IImageFiles } from '../../interface/IImageFile';
 import { IJwtPayload } from '../auth/auth.interface';
-import User from '../user/user.model';
 import { IProduct } from './product.interface';
-import { Category } from '../category/category.model';
 import { Product } from './product.model';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { Order } from '../order/order.model';
-import Shop from '../shop/shop.model';
 import { Review } from '../review/review.model';
-import { FlashSale } from '../flashSell/flashSale.model';
 import { hasActiveShop } from '../../utils/hasActiveShop';
+import User from '../user/user.model';
+import Shop from '../shop/shop.model';
+
 
 const createProduct = async (
    productData: Partial<IProduct>,
    productImages: IImageFiles,
    authUser: IJwtPayload
 ) => {
+
    const shop = await hasActiveShop(authUser.userId);
 
    const { images } = productImages;
@@ -30,14 +30,6 @@ const createProduct = async (
 
    productData.imageUrls = images.map((image) => image.path);
 
-   const isCategoryExists = await Category.findById(productData.category);
-   if (!isCategoryExists) {
-      throw new AppError(StatusCodes.BAD_REQUEST, 'Category does not exist!');
-   }
-
-   if (!isCategoryExists.isActive) {
-      throw new AppError(StatusCodes.BAD_REQUEST, 'Category is not active!');
-   }
 
    const newProduct = new Product({
       ...productData,
@@ -48,58 +40,6 @@ const createProduct = async (
    return result;
 };
 
-// const getAllProduct = async (query: Record<string, unknown>) => {
-//    const { minPrice, maxPrice, ...pQuery } = query;
-
-//    const productQuery = new QueryBuilder(
-//       Product.find()
-//          .populate('category', 'name')
-//          .populate('shop', 'shopName')
-//          .populate('brand', 'name'),
-//       pQuery
-//    )
-//       .search(['name', 'description'])
-//       .filter()
-//       .sort()
-//       .paginate()
-//       .fields()
-//       .priceRange(Number(minPrice) || 0, Number(maxPrice) || Infinity);
-
-//    const products = await productQuery.modelQuery.lean();
-
-//    const meta = await productQuery.countTotal();
-
-//    const productIds = products.map((product: any) => product._id);
-
-//    const flashSales = await FlashSale.find({
-//       product: { $in: productIds },
-//       discountPercentage: { $gt: 0 },
-//    }).select('product discountPercentage');
-
-//    const flashSaleMap = flashSales.reduce((acc, { product, discountPercentage }) => {
-//       //@ts-ignore
-//       acc[product.toString()] = discountPercentage;
-//       return acc;
-//    }, {});
-
-//    const updatedProducts = products.map((product: any) => {
-//       //@ts-ignore
-//       const discountPercentage = flashSaleMap[product._id.toString()];
-//       if (discountPercentage) {
-//          product.offerPrice = product.price * (1 - discountPercentage / 100);
-//       } else {
-//          product.offerPrice = null;
-//       }
-//       return product;
-//    });
-
-//    return {
-//       meta,
-//       result: updatedProducts,
-//    };
-// };
-
-// Product.service.ts
 
 const getAllProduct = async (query: Record<string, unknown>) => {
    const {
@@ -170,16 +110,6 @@ const getAllProduct = async (query: Record<string, unknown>) => {
    // Get Flash Sale Discounts
    const productIds = products.map((product: any) => product._id);
 
-   const flashSales = await FlashSale.find({
-      product: { $in: productIds },
-      discountPercentage: { $gt: 0 },
-   }).select('product discountPercentage');
-
-   const flashSaleMap = flashSales.reduce((acc, { product, discountPercentage }) => {
-      //@ts-ignore
-      acc[product.toString()] = discountPercentage;
-      return acc;
-   }, {});
 
    // Add offer price to products
    const updatedProducts = products.map((product: any) => {
@@ -251,6 +181,7 @@ const getTrendingProducts = async (limit: number) => {
 
    return trendingProducts;
 };
+
 
 const getSingleProduct = async (productId: string) => {
    const product = await Product.findById(productId)
@@ -330,6 +261,7 @@ const getMyShopProducts = async (query: Record<string, unknown>, authUser: IJwtP
    };
 };
 
+
 const updateProduct = async (
    productId: string,
    payload: Partial<IProduct>,
@@ -365,6 +297,7 @@ const updateProduct = async (
    return await Product.findByIdAndUpdate(productId, payload, { new: true });
 };
 
+
 const deleteProduct = async (productId: string, authUser: IJwtPayload) => {
    const user = await User.findById(authUser.userId);
    const shop = await Shop.findOne({ user: user?._id });
@@ -386,12 +319,13 @@ const deleteProduct = async (productId: string, authUser: IJwtPayload) => {
    return await Product.findByIdAndDelete(productId);
 };
 
+
 export const ProductService = {
    createProduct,
    getAllProduct,
    getTrendingProducts,
    getSingleProduct,
+   getMyShopProducts,
    updateProduct,
-   deleteProduct,
-   getMyShopProducts
+   deleteProduct
 };

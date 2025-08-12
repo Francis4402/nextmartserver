@@ -2,13 +2,14 @@ import { ClientSession } from 'mongoose';
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/appError';
 import User from '../user/user.model';
-import { IAuth, IJwtPayload } from './auth.interface';
+import { IAuth, IJwtPayload, IOtpPayload } from './auth.interface';
 import { createToken, verifyToken } from './auth.utils';
 import config from '../../config';
 import mongoose from 'mongoose';
 import { JwtPayload, Secret } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
+import ms, { StringValue } from 'ms';
 import { generateOtp } from '../../utils/generateOtp';
 import { EmailHelper } from '../../utils/emailHelper';
 
@@ -37,7 +38,6 @@ const loginUser = async (payload: IAuth) => {
          userId: user._id as string,
          name: user.name as string,
          email: user.email as string,
-         hasShop: user.hasShop,
          isActive: user.isActive,
          role: user.role,
       };
@@ -45,13 +45,13 @@ const loginUser = async (payload: IAuth) => {
       const accessToken = createToken(
          jwtPayload,
          config.jwt_access_secret as string,
-         config.jwt_access_expires_in as string
+         config.jwt_access_expires_in as StringValue
       );
 
       const refreshToken = createToken(
          jwtPayload,
          config.jwt_refresh_secret as string,
-         config.jwt_refresh_expires_in as string
+         config.jwt_refresh_expires_in as StringValue
       );
 
       const updateUserInfo = await User.findByIdAndUpdate(
@@ -78,7 +78,7 @@ const refreshToken = async (token: string) => {
 
    let verifiedToken = null;
    try {
-      verifiedToken = verifyToken(
+      verifiedToken = verifyToken<IJwtPayload>(
          token,
          config.jwt_refresh_secret as Secret
       );
@@ -102,7 +102,6 @@ const refreshToken = async (token: string) => {
       userId: isUserExist._id as string,
       name: isUserExist.name as string,
       email: isUserExist.email as string,
-      hasShop: isUserExist.hasShop,
       isActive: isUserExist.isActive,
       role: isUserExist.role,
    };
@@ -110,7 +109,7 @@ const refreshToken = async (token: string) => {
    const newAccessToken = createToken(
       jwtPayload,
       config.jwt_access_secret as Secret,
-      config.jwt_access_expires_in as string
+      config.jwt_access_expires_in as StringValue
    );
 
    return {
@@ -138,6 +137,7 @@ const changePassword = async (
       oldPassword,
       user.password
    );
+   
    if (!isOldPasswordCorrect) {
       throw new AppError(StatusCodes.FORBIDDEN, 'Incorrect old password');
    }
@@ -165,9 +165,11 @@ const forgotPassword = async ({ email }: { email: string }) => {
 
    const otp = generateOtp();
 
-   const otpToken = jwt.sign({ otp, email }, config.jwt_otp_secret as string, {
-      expiresIn: '5m',
-   });
+   const otpSignOptions: SignOptions = {
+      expiresIn: ms('5m' as StringValue)
+   };
+   
+   const otpToken = jwt.sign({ otp, email }, config.jwt_otp_secret as Secret, otpSignOptions);
 
    await User.updateOne({ email }, { otpToken });
 
@@ -190,49 +192,60 @@ const forgotPassword = async ({ email }: { email: string }) => {
 
 const verifyOTP = async (
    { email, otp }: { email: string, otp: string }
-) => {
+ ) => {
    const user = await User.findOne({ email: email });
-
+ 
    if (!user) {
-      throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
    }
-
+ 
    if (!user.otpToken || user.otpToken === '') {
-      throw new AppError(
-         StatusCodes.BAD_REQUEST,
-         'No OTP token found. Please request a new password reset OTP.'
-      );
+     throw new AppError(
+       StatusCodes.BAD_REQUEST,
+       'No OTP token found. Please request a new password reset OTP.'
+     );
    }
-
-   const decodedOtpData = verifyToken(
-      user.otpToken as string,
-      config.jwt_otp_secret as string
+ 
+   const decodedOtpData = verifyToken<IOtpPayload>(
+     user.otpToken as string,
+     config.jwt_otp_secret as string
    );
-
+ 
    if (!decodedOtpData) {
-      throw new AppError(
-         StatusCodes.FORBIDDEN,
-         'OTP has expired or is invalid'
-      );
+     throw new AppError(
+       StatusCodes.FORBIDDEN,
+       'OTP has expired or is invalid'
+     );
    }
-
+ 
    if (decodedOtpData.otp !== otp) {
-      throw new AppError(StatusCodes.FORBIDDEN, 'Invalid OTP');
+     throw new AppError(StatusCodes.FORBIDDEN, 'Invalid OTP');
    }
-
+ 
    user.otpToken = null;
    await user.save();
-
-   const resetToken = jwt.sign({ email }, config.jwt_pass_reset_secret as string, {
-      expiresIn: config.jwt_pass_reset_expires_in,
-   });
-
-   // Return the reset token
-   return {
-      resetToken
+ 
+   
+   if (!config.jwt_pass_reset_secret) {
+     throw new Error('JWT reset secret is not configured');
+   }
+ 
+   // Create options object with proper typing
+   const signOptions: SignOptions = {
+     expiresIn: config.jwt_pass_reset_expires_in ? ms(config.jwt_pass_reset_expires_in as StringValue) : ms('1h' as StringValue)
    };
+   
+   const resetToken = jwt.sign(
+     { email }, 
+     config.jwt_pass_reset_secret as Secret,
+     signOptions
+   );
+ 
+   return {
+     resetToken
+   };
+ }
 
-}
 
 const resetPassword = async ({
    token,
@@ -247,7 +260,7 @@ const resetPassword = async ({
    try {
       session.startTransaction();
 
-      const decodedData = verifyToken(
+      const decodedData = verifyToken<{ email: string }>(
          token as string,
          config.jwt_pass_reset_secret as string
       );
@@ -283,8 +296,8 @@ const resetPassword = async ({
 export const AuthService = {
    loginUser,
    refreshToken,
+   verifyOTP,
    changePassword,
    forgotPassword,
-   verifyOTP,
    resetPassword,
 };

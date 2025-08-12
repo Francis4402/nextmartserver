@@ -1,8 +1,5 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
-import { IJwtPayload } from '../auth/auth.interface';
-import sendResponse from '../../utils/sendResponse';
-import { StatusCodes } from 'http-status-codes';
 import { sslService } from './sslcommerz.service';
 import config from '../../config';
 

@@ -6,7 +6,7 @@ import { FlashSale } from "./flashSale.model";
 import User from "../user/user.model";
 import Shop from "../shop/shop.model";
 import QueryBuilder from "../../builder/QueryBuilder";
-import { Product } from "../product/product.model";
+
 
 
 const createFlashSale = async (flashSellData: ICreateFlashSaleInput, authUser: IJwtPayload) => {

@@ -1,16 +1,17 @@
 import { Router } from 'express';
 import { UserRoutes } from '../modules/user/user.routes';
 import { AuthRoutes } from '../modules/auth/auth.routes';
-import { CategoryRoutes } from '../modules/category/category.routes';
-import { ProductRoutes } from '../modules/product/product.routes';
 import { OrderRoutes } from '../modules/order/order.routes';
+import { CategoryRoutes } from '../modules/category/category.routes';
+import { BrandRoutes } from '../modules/brand/brand.routes';
+import { ProductRoutes } from '../modules/product/product.routes';
+import { ShopRoutes } from '../modules/shop/shop.routes';
+import { FlashSaleRoutes } from '../modules/flashSell/flashSale.routes';
 import { CouponRoutes } from '../modules/coupon/coupon.routes';
 import { SSLRoutes } from '../modules/sslcommerz/sslcommerz.routes';
-import { BrandRoutes } from '../modules/brand/brand.routes';
-import { ShopRoutes } from '../modules/shop/shop.routes';
 import { ReviewRoutes } from '../modules/review/review.routes';
-import { FlashSaleRoutes } from '../modules/flashSell/flashSale.routes';
 import { MetaRoutes } from '../modules/meta/meta.route';
+
 const router = Router();
 
 const moduleRoutes = [
@@ -23,28 +24,24 @@ const moduleRoutes = [
       route: AuthRoutes,
    },
    {
-      path: '/shop',
-      route: ShopRoutes,
-   },
-   {
       path: '/category',
-      route: CategoryRoutes,
+      route: CategoryRoutes
    },
    {
       path: '/brand',
-      route: BrandRoutes,
+      route: BrandRoutes
    },
    {
       path: '/product',
-      route: ProductRoutes,
+      route: ProductRoutes
+   },
+   {
+      path: '/shop',
+      route: ShopRoutes
    },
    {
       path: '/flash-sale',
-      route: FlashSaleRoutes,
-   },
-   {
-      path: '/order',
-      route: OrderRoutes,
+      route: FlashSaleRoutes
    },
    {
       path: '/coupon',
@@ -61,6 +58,10 @@ const moduleRoutes = [
    {
       path: '/meta',
       route: MetaRoutes,
+   },
+   {
+      path: '/order',
+      route: OrderRoutes,
    },
 ];
 

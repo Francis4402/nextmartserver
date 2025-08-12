@@ -5,7 +5,7 @@ import config from '../../config';
 import AppError from '../../errors/appError';
 import { StatusCodes } from 'http-status-codes';
 
-// Create the User schema based on the interface
+
 const userSchema = new Schema<IUser, UserModel>(
    {
       name: {
@@ -29,7 +29,7 @@ const userSchema = new Schema<IUser, UserModel>(
       },
       hasShop: {
          type: Boolean,
-         default: false, // Default value is false
+         default: false,
       },
       clientInfo: {
          device: {
@@ -65,7 +65,7 @@ const userSchema = new Schema<IUser, UserModel>(
       },
       otpToken: {
          type: String,
-         default: null
+         default: null,
       },
    },
    {

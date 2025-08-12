@@ -43,6 +43,7 @@ const getTrendingProducts = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const getSingleProduct = catchAsync(async (req, res) => {
   const { productId } = req.params;
   const result = await ProductService.getSingleProduct(productId);
@@ -70,6 +71,7 @@ const getMyShopProducts = catchAsync(async (req, res) => {
   });
 });
 
+
 const updateProduct = catchAsync(async (req, res) => {
   const {
     user,
@@ -92,7 +94,6 @@ const updateProduct = catchAsync(async (req, res) => {
   });
 });
 
-// hard delete
 const deleteProduct = catchAsync(async (req, res) => {
   const {
     user,
@@ -118,6 +119,6 @@ export const ProductController = {
   getTrendingProducts,
   getSingleProduct,
   updateProduct,
-  deleteProduct,
   getMyShopProducts,
+  deleteProduct
 };

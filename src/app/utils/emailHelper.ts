@@ -16,7 +16,7 @@ const sendEmail = async (
       const transporter = nodemailer.createTransport({
          host: "smtp.gmail.com",
          port: 587,
-         secure: false, // Use `true` for port 465, `false` for all other ports
+         secure: false,
          auth: {
             user: config.sender_email,
             pass: config.sender_app_password,
@@ -28,7 +28,7 @@ const sendEmail = async (
 
       // Email configuration
       const mailOptions: any = {
-         from: '"NextMart" <support@nextmart.com>',
+         from: '"NextMart" francisleonado@gmail.com',
          to: email,
          subject,
          html,

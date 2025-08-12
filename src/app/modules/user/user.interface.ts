@@ -14,12 +14,12 @@ export interface IUser extends Document {
    role: UserRole;
    hasShop: boolean;
    clientInfo: {
-      device: 'pc' | 'mobile'; // Device type
-      browser: string; // Browser name
-      ipAddress: string; // User IP address
-      pcName?: string; // Optional PC name
-      os?: string; // Optional OS name (Windows, MacOS, etc.)
-      userAgent?: string; // Optional user agent string
+      device: 'pc' | 'mobile'; 
+      browser: string;
+      ipAddress: string;
+      pcName?: string;
+      os?: string;
+      userAgent?: string;
    };
    lastLogin: Date;
    isActive: boolean;

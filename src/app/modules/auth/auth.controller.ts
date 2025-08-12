@@ -27,7 +27,7 @@ const loginUser = catchAsync(async (req, res) => {
   });
 });
 
-const refreshToken = catchAsync(async (req: Request, res: Response) => {
+const refreshToken = catchAsync(async (req, res) => {
   const { authorization } = req.headers;
 
   const result = await AuthService.refreshToken(authorization as string);
@@ -41,7 +41,7 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 });
 
 // change password
-const changePassword = catchAsync(async (req: Request, res: Response) => {
+const changePassword = catchAsync(async (req, res) => {
   const user = req.user;
   const payload = req.body;
 
@@ -56,7 +56,7 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 // forgot password
-const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+const forgotPassword = catchAsync(async (req, res) => {
   await AuthService.forgotPassword(req.body);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -66,7 +66,6 @@ const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// reset password
 
 const verifyOTP = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.verifyOTP(req.body);
@@ -79,7 +78,7 @@ const verifyOTP = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const resetPassword = catchAsync(async (req: Request, res: Response) => {
+const resetPassword = catchAsync(async (req, res) => {
   const payload = req.body;
 
   const result = await AuthService.resetPassword(payload);

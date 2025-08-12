@@ -12,12 +12,12 @@ import notFound from "./app/middleware/notFound";
 const app: Application = express();
 
 // Middleware setup
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(cors({ origin: "*" }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/v1", router);
+app.use("/api", router);
 
 // seedAdmin();
 
@@ -45,8 +45,8 @@ app.get("/", (req: Request, res: Response, next: NextFunction) => {
       )} minutes`,
     },
     developerContact: {
-      email: "fahimfiroz.ph@gmail.com",
-      website: "https://programming-hero.com",
+      email: "francisleonado@gmail.com",
+      website: "",
     },
   });
 });
