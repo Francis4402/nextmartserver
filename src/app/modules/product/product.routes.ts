@@ -15,16 +15,15 @@ router.get('/trending', ProductController.getTrendingProducts);
 
 router.get(
    '/my-shop-products',
-   auth(UserRole.USER),
+   auth(UserRole.ADMIN),
    ProductController.getMyShopProducts
 );
 
 router.get('/:productId', ProductController.getSingleProduct);
 
-
 router.post(
    '/',
-   auth(UserRole.USER),
+   auth(UserRole.ADMIN),
    multerUpload.fields([{ name: 'images' }]),
    parseBody,
    validateRequest(productValidation.createProductValidationSchema),
@@ -33,7 +32,7 @@ router.post(
 
 router.patch(
    '/:productId',
-   auth(UserRole.USER),
+   auth(UserRole.ADMIN),
    multerUpload.fields([{ name: 'images' }]),
    parseBody,
    ProductController.updateProduct
@@ -41,7 +40,7 @@ router.patch(
 
 router.delete(
    '/:productId',
-   auth(UserRole.USER),
+   auth(UserRole.ADMIN),
    ProductController.deleteProduct
 );
 

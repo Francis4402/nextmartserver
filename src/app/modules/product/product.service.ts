@@ -10,6 +10,7 @@ import { Review } from '../review/review.model';
 import { hasActiveShop } from '../../utils/hasActiveShop';
 import User from '../user/user.model';
 import Shop from '../shop/shop.model';
+import { FlashSale } from '../flashSell/flashSale.model';
 
 
 const createProduct = async (
@@ -110,6 +111,16 @@ const getAllProduct = async (query: Record<string, unknown>) => {
    // Get Flash Sale Discounts
    const productIds = products.map((product: any) => product._id);
 
+   const flashSales = await FlashSale.find({
+      product: { $in: productIds },
+      discountPercentage: { $gt: 0 },
+   }).select('product discountPercentage');
+
+   const flashSaleMap = flashSales.reduce((acc, { product, discountPercentage }) => {
+      //@ts-ignore
+      acc[product.toString()] = discountPercentage;
+      return acc;
+   }, {});
 
    // Add offer price to products
    const updatedProducts = products.map((product: any) => {

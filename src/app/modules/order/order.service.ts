@@ -9,6 +9,10 @@ import User from "../user/user.model";
 import AppError from "../../errors/appError";
 import { StatusCodes } from "http-status-codes";
 import QueryBuilder from "../../builder/QueryBuilder";
+import { EmailHelper } from "../../utils/emailHelper";
+import { generateOrderInvoicePDF } from "../../utils/generateOrderInvoicePDF";
+import { sslService } from "../sslcommerz/sslcommerz.service";
+import Shop from "../shop/shop.model";
 
 const createOrder = async (
   orderData: Partial<IOrder>,
@@ -66,40 +70,40 @@ const createOrder = async (
 
     let result;
 
-    // if (createdOrder.paymentMethod == "Online") {
-    //   result = await sslService.initPayment({
-    //     total_amount: createdOrder.finalAmount,
-    //     tran_id: transactionId,
-    //   });
-    //   result = { paymentUrl: result };
-    // } else {
-    //   result = order;
-    // }
+    if (createdOrder.paymentMethod == "Online") {
+      result = await sslService.initPayment({
+        total_amount: createdOrder.finalAmount,
+        tran_id: transactionId,
+      });
+      result = { paymentUrl: result };
+    } else {
+      result = order;
+    }
 
     // Commit the transaction
     await session.commitTransaction();
     session.endSession();
 
-    // const pdfBuffer = await generateOrderInvoicePDF(createdOrder);
-    // const emailContent = await EmailHelper.createEmailContent(
-    //   //@ts-ignore
-    //   { userName: createdOrder.user.name || "" },
-    //   "orderInvoice"
-    // );
+    const pdfBuffer = await generateOrderInvoicePDF(createdOrder);
+    const emailContent = await EmailHelper.createEmailContent(
+      //@ts-ignore
+      { userName: createdOrder.user.name || "" },
+      "orderInvoice"
+    );
 
-    // const attachment = {
-    //   filename: `Invoice_${createdOrder._id}.pdf`,
-    //   content: pdfBuffer,
-    //   encoding: "base64", // if necessary
-    // };
+    const attachment = {
+      filename: `Invoice_${createdOrder._id}.pdf`,
+      content: pdfBuffer,
+      encoding: "base64", // if necessary
+    };
 
-    // await EmailHelper.sendEmail(
-    //   //@ts-ignore
-    //   createdOrder.user.email,
-    //   emailContent,
-    //   "Order confirmed!",
-    //   attachment
-    // );
+    await EmailHelper.sendEmail(
+      //@ts-ignore
+      createdOrder.user.email,
+      emailContent,
+      "Order confirmed!",
+      attachment
+    );
     return result;
   } catch (error) {
     console.log(error);
@@ -115,27 +119,45 @@ const getMyShopOrders = async (
   authUser: IJwtPayload
 ) => {
 
+  const userHasShop = await User.findById(authUser.userId).select(
+    "isActive hasShop"
+  );
 
-  // const orderQuery = new QueryBuilder(
-  //   Order.find({ shop: shopIsActive._id }).populate(
-  //     "user products.product coupon"
-  //   ),
-  //   query
-  // )
-  //   .search(["user.name", "user.email", "products.product.name"])
-  //   .filter()
-  //   .sort()
-  //   .paginate()
-  //   .fields();
+  if (!userHasShop)
+    throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
+  if (!userHasShop.isActive)
+    throw new AppError(StatusCodes.BAD_REQUEST, "User account is not active!");
+  if (!userHasShop.hasShop)
+    throw new AppError(StatusCodes.BAD_REQUEST, "User does not have any shop!");
 
-  // const result = await orderQuery.modelQuery;
+  const shopIsActive = await Shop.findOne({
+    user: userHasShop._id,
+    isActive: true,
+  }).select("isActive");
 
-  // const meta = await orderQuery.countTotal();
+  if (!shopIsActive)
+    throw new AppError(StatusCodes.BAD_REQUEST, "Shop is not active!");
 
-  // return {
-  //   meta,
-  //   result,
-  // };
+  const orderQuery = new QueryBuilder(
+    Order.find({ shop: shopIsActive._id }).populate(
+      "user products.product coupon"
+    ),
+    query
+  )
+    .search(["user.name", "user.email", "products.product.name"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const result = await orderQuery.modelQuery;
+
+  const meta = await orderQuery.countTotal();
+
+  return {
+    meta,
+    result,
+  };
 };
 
 const getOrderDetails = async (orderId: string) => {
@@ -181,7 +203,31 @@ const changeOrderStatus = async (
   status: string,
   authUser: IJwtPayload
 ) => {
-  
+  const userHasShop = await User.findById(authUser.userId).select(
+    "isActive hasShop"
+  );
+
+  if (!userHasShop)
+    throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
+  if (!userHasShop.isActive)
+    throw new AppError(StatusCodes.BAD_REQUEST, "User account is not active!");
+  if (!userHasShop.hasShop)
+    throw new AppError(StatusCodes.BAD_REQUEST, "User does not have any shop!");
+
+  const shopIsActive = await Shop.findOne({
+    user: userHasShop._id,
+    isActive: true,
+  }).select("isActive");
+
+  if (!shopIsActive)
+    throw new AppError(StatusCodes.BAD_REQUEST, "Shop is not active!");
+
+  const order = await Order.findOneAndUpdate(
+    { _id: new Types.ObjectId(orderId), shop: shopIsActive._id },
+    { status },
+    { new: true }
+  );
+  return order;
 };
 
 export const OrderService = {
